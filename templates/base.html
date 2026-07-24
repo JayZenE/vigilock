@@ -1,28 +1,40 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vigilock</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-  </head>
-  <body>
-    <header>
-      <h1>Vigilock</h1>
-      <nav>
-        <a href="/">Home</a> |
-        <a href="/about">About</a> |
-        <a href="/encrypt">Encrypt</a> |
-        <a href="/decrypt">Decrypt</a> |
-        <a href="/recovery">Recovery</a>
-      </nav>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VigiLock</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="container navbar-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="VigiLock Logo">
+                </div>
+            </a>
+
+            <nav aria-label="Primary navigation">
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/encrypt">Encrypt</a></li>
+                    <li><a href="/decrypt">Decrypt</a></li>
+                    <li><a href="/recovery">Data Recovery</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
-    <main>
-      {% block content %}{% endblock %}
-    </main>
-    <footer>
-      <p>© 2026 Vigilock</p>
-    </footer>
-    <script src="/static/js/script.js"></script>
-  </body>
+</body>
+
 </html>

@@ -1,5 +1,33 @@
 {% extends 'base.html' %}
+
+{% block hero %}
+<section class="hero">
+    <div>
+        <span class="hero__label">Welcome to VIGILOCK</span>
+        <h1>Free, Private, Secure</h1>
+        <p>Protect your data with end-to-end encryption and fast recovery. Simple, modern security built for everyone.</p>
+
+        <div class="hero-actions">
+            <a href="/encrypt" class="btn btn-primary">Encrypt</a>
+            <a href="/decrypt" class="btn btn-secondary">Decrypt</a>
+        </div>
+    </div>
+
+    <div class="hero-visual">
+        <article class="hero-card">
+            <div class="hero-card__icon">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Shield icon">
+            </div>
+            <h2>Built for privacy</h2>
+            <p>Keep your files locked and recover data safely whenever you need it. No account required.</p>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
 {% block content %}
-<h2>Welcome to Vigilock</h2>
-<p>Secure your files with easy encryption and recovery tools.</p>
+<div>
+    <h2>Welcome to Vigilock</h2>
+    <p>Secure your files with easy encryption and recovery tools.</p>
+</div>
 {% endblock %}
