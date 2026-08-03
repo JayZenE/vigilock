@@ -1,17 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VigiLock</title>
 
-    <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
@@ -26,15 +23,23 @@
 
             <nav aria-label="Primary navigation">
                 <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/encrypt">Encrypt</a></li>
-                    <li><a href="/decrypt">Decrypt</a></li>
-                    <li><a href="/recovery">Data Recovery</a></li>
+                    <li><a href="/">home</a></li>
+                    <li><a href="/about">about</a></li>
+                    <li><a href="/encrypt">encrypt</a></li>
+                    <li><a href="/decrypt">decrypt</a></li>
+                    <li><a href="/recovery">data recovery</a></li>
                 </ul>
             </nav>
         </div>
     </header>
-</body>
 
+    <main class="page-wrapper">
+        <div class="container">
+            <div class="content-shell">
+                {% block hero %}{% endblock %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+</body>
 </html>

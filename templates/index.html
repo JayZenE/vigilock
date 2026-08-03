@@ -3,13 +3,13 @@
 {% block hero %}
 <section class="hero">
     <div>
-        <span class="hero__label">Welcome to VIGILOCK</span>
-        <h1>Free, Private, Secure</h1>
-        <p>Protect your data with end-to-end encryption and fast recovery. Simple, modern security built for everyone.</p>
+        <h2>welcome to</h2>
+        <h1 class="vigilockName">vigilock</h1>
+        <p>protect your data with end-to-end encryption and fast recovery. simple, modern security built for everyone.</p>
 
         <div class="hero-actions">
-            <a href="/encrypt" class="btn btn-primary">Encrypt</a>
-            <a href="/decrypt" class="btn btn-secondary">Decrypt</a>
+            <a href="/encrypt" class="btn btn-primary">encrypt</a>
+            <a href="/decrypt" class="btn btn-secondary">decrypt</a>
         </div>
     </div>
 
@@ -18,16 +18,10 @@
             <div class="hero-card__icon">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Shield icon">
             </div>
-            <h2>Built for privacy</h2>
-            <p>Keep your files locked and recover data safely whenever you need it. No account required.</p>
+            <h2>built for privacy</h2>
+            <p>keep your files locked and recover data safely whenever you need it. no account required.</p>
         </article>
     </div>
 </section>
 {% endblock %}
 
-{% block content %}
-<div>
-    <h2>Welcome to Vigilock</h2>
-    <p>Secure your files with easy encryption and recovery tools.</p>
-</div>
-{% endblock %}
