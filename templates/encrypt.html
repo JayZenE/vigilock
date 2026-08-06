@@ -1,5 +1,153 @@
 {% extends 'base.html' %}
+
+{% block hero %}
+<section class="hero encrypt-hero">
+    <div class="hero__copy">
+        <h1>encrypt files</h1>
+        <p>secure your files with a strong password in seconds.</p>
+    </div>
+</section>
+{% endblock %}
+
 {% block content %}
-<h2>Encrypt Files</h2>
-<p>Choose a file to encrypt and provide a passphrase.</p>
+<div class="encrypt-layout">
+    <form id="encryptForm" class="encrypt-form" action="{{ url_for('encrypt') }}" method="post" enctype="multipart/form-data">
+        <div class="upload-card">
+            <div class="upload-dropzone" id="dropZone">
+                <p id="dropText" class="drop-text">drag & drop your file here or <label class="upload-label" for="fileInput">choose file</label></p>
+                <input type="file" id="fileInput" name="file" required>
+                <p id="fileName" class="file-name"></p>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label for="password">password</label>
+            <input type="password" id="password" name="password" placeholder="enter a secure password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary encrypt-submit">encrypt file</button>
+    </form>
+
+    <aside class="encrypt-info">
+        <h3>upload details</h3>
+        <ul>
+            <li>maximum file size: 100mb</li>
+            <li>one file at a time</li>
+            <li>unlimited    usage</li>
+        </ul>
+    </aside>
+</div>
+
+<div id="errorModal" class="error-modal" aria-hidden="true">
+    <div class="error-modal__card" role="dialog" aria-modal="true" aria-labelledby="modalMessage">
+        <div class="error-modal__header">
+            <h3>Error</h3>
+            <button id="modalClose" class="error-modal__close" type="button" aria-label="Close error message">&times;</button>
+        </div>
+        <p id="modalMessage" class="error-modal__message"></p>
+        <div class="error-modal__actions">
+            <button id="modalOk" class="btn btn-primary" type="button">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileName');
+    const dropText = document.getElementById('dropText');
+    const orText = document.getElementById('orText');
+    const MAX_SIZE = 100 * 1024 * 1024;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropZone.style.borderColor = '#2563eb';
+        dropZone.style.background = '#eff6ff';
+    }
+
+    function unhighlight() {
+        dropZone.style.borderColor = '#cbd5e1';
+        dropZone.style.background = '#f8fafc';
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.size > MAX_SIZE) {
+                showError('The file you have uploaded exceeds the 100MB limit, please select a smaller file and try again.');
+                return;
+            }
+            fileInput.files = files;
+            displayFileName(file.name);
+        }
+    }
+
+    function showError(message) {
+        const modal = document.getElementById('errorModal');
+        const msg = document.getElementById('modalMessage');
+        msg.textContent = message;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    const modalClose = document.getElementById('modalClose');
+    const modalOk = document.getElementById('modalOk');
+
+    modalClose.addEventListener('click', () => closeError());
+    modalOk.addEventListener('click', () => closeError());
+
+    function closeError() {
+        const modal = document.getElementById('errorModal');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            if (file.size > MAX_SIZE) {
+                this.value = '';
+                showError('The file you have uploaded exceeds the 100MB limit, please select a smaller file and try again.');
+                return;
+            }
+            displayFileName(file.name);
+        }
+    });
+
+    const encryptForm = document.getElementById('encryptForm');
+    encryptForm.addEventListener('submit', (e) => {
+        const file = fileInput.files[0];
+        if (file && file.size > MAX_SIZE) {
+            e.preventDefault();
+            showError('Cannot upload files larger than 100MB.');
+        }
+    });
+
+    function displayFileName(name) {
+        dropText.style.display = 'none';
+        orText.style.display = 'none';
+        fileNameDisplay.textContent = '✓ ' + name;
+        fileNameDisplay.style.display = 'block';
+        fileInput.classList.add('has-file');
+    }
+</script>
 {% endblock %}
