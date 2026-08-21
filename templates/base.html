@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VigiLock</title>
+    <title>vigilock</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,6 +28,7 @@
                     <li><a href="/encrypt">encrypt</a></li>
                     <li><a href="/decrypt">decrypt</a></li>
                     <li><a href="/recovery">data recovery</a></li>
+                    <li><a href="#" id="suggestImprovementsLink">suggest improvements</a></li>
                 </ul>
             </nav>
         </div>
@@ -41,5 +42,54 @@
             </div>
         </div>
     </main>
+
+    <div id="redirectModal" class="error-modal" aria-hidden="true">
+        <div class="error-modal__card" role="dialog" aria-modal="true" aria-labelledby="redirectModalTitle">
+            <div class="error-modal__header">
+                <h3 id="redirectModalTitle">External link</h3>
+                <button id="redirectModalClose" class="error-modal__close" type="button" aria-label="Close confirmation">&times;</button>
+            </div>
+            <p class="error-modal__message">This button redirects you to an external site (linktr.ee). Confirm redirect?</p>
+            <div class="error-modal__actions">
+                <button id="redirectModalCancel" class="btn btn-secondary" type="button">Cancel</button>
+                <button id="redirectModalConfirm" class="btn btn-primary" type="button">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const suggestLink = document.getElementById('suggestImprovementsLink');
+        const redirectModal = document.getElementById('redirectModal');
+        const redirectModalClose = document.getElementById('redirectModalClose');
+        const redirectModalCancel = document.getElementById('redirectModalCancel');
+        const redirectModalConfirm = document.getElementById('redirectModalConfirm');
+        const pendingRedirectUrl = 'https://linktr.ee/vigilocksuggestions';
+
+        if (suggestLink) {
+            suggestLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                redirectModal.style.display = 'flex';
+                redirectModal.setAttribute('aria-hidden', 'false');
+            });
+        }
+
+        function closeRedirectModal() {
+            redirectModal.style.display = 'none';
+            redirectModal.setAttribute('aria-hidden', 'true');
+        }
+
+        [redirectModalClose, redirectModalCancel].forEach((button) => {
+            if (button) {
+                button.addEventListener('click', closeRedirectModal);
+            }
+        });
+
+        if (redirectModalConfirm) {
+            redirectModalConfirm.addEventListener('click', function () {
+                closeRedirectModal();
+                window.open(pendingRedirectUrl, '_blank', 'noopener,noreferrer');
+            });
+        }
+    </script>
 </body>
 </html>

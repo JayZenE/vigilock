@@ -14,7 +14,7 @@
     <form id="encryptForm" class="encrypt-form" action="{{ url_for('encrypt') }}" method="post" enctype="multipart/form-data">
         <div class="upload-card">
             <div class="upload-dropzone" id="dropZone">
-                <p id="dropText" class="drop-text">drag & drop your file here or <label class="upload-label" for="fileInput">choose file</label></p>
+                <p id="dropText" class="drop-text">drag & drop your file here <span id="orText">or</span> <label class="upload-label" for="fileInput">choose file</label></p>
                 <input type="file" id="fileInput" name="file" required>
                 <p id="fileName" class="file-name"></p>
             </div>
@@ -25,6 +25,11 @@
             <input type="password" id="password" name="password" placeholder="enter a secure password" required>
         </div>
 
+        <div class="form-field">
+            <label for="recoveryPhrase">recovery phrase</label>
+            <input type="password" id="recoveryPhrase" name="recovery_phrase" placeholder="create a recovery phrase" autocomplete="off" required>
+        </div>
+
         <button type="submit" class="btn btn-primary encrypt-submit">encrypt file</button>
     </form>
 
@@ -33,10 +38,18 @@
         <ul>
             <li>maximum file size: 100mb</li>
             <li>one file at a time</li>
-            <li>unlimited    usage</li>
+            <li>keep your recovery phrase somewhere safe</li>
         </ul>
     </aside>
 </div>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<script>
+    window.__vigilockFlashMessages = {{ messages | tojson }};
+</script>
+{% endif %}
+{% endwith %}
 
 <div id="errorModal" class="error-modal" aria-hidden="true">
     <div class="error-modal__card" role="dialog" aria-modal="true" aria-labelledby="modalMessage">
@@ -143,11 +156,20 @@
     });
 
     function displayFileName(name) {
-        dropText.style.display = 'none';
-        orText.style.display = 'none';
+        if (dropText) {
+            dropText.style.display = 'none';
+        }
+        if (orText) {
+            orText.style.display = 'none';
+        }
         fileNameDisplay.textContent = '✓ ' + name;
         fileNameDisplay.style.display = 'block';
         fileInput.classList.add('has-file');
+    }
+
+    const flashMessages = window.__vigilockFlashMessages || [];
+    if (flashMessages.length > 0) {
+        showError(flashMessages[0]);
     }
 </script>
 {% endblock %}

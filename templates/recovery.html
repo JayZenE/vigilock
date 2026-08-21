@@ -1,5 +1,125 @@
 {% extends 'base.html' %}
+{% block hero %}
+<section class="hero encrypt-hero">
+	<div class="hero__copy">
+		<h1>data recovery</h1>
+		<p>restore the original file from a vigiLock backup using your recovery phrase.</p>
+	</div>
+</section>
+{% endblock %}
+
 {% block content %}
-<h2>Recovery</h2>
-<p>Recover access to your encrypted data using your recovery key.</p>
+<div class="encrypt-layout">
+	<form id="recoveryForm" class="encrypt-form" action="{{ url_for('recovery') }}" method="post" enctype="multipart/form-data">
+		<div class="upload-card">
+			<div class="upload-dropzone" id="recoveryDropZone">
+				<p id="recoveryDropText" class="drop-text">drag & drop your encrypted file here <span>or</span> <label class="upload-label" for="recoveryFileInput">choose file</label></p>
+				<input type="file" id="recoveryFileInput" name="file" accept=".vigilock,application/octet-stream" required>
+				<p id="recoveryFileName" class="file-name"></p>
+			</div>
+		</div>
+
+		<div class="form-field">
+			<label for="recoveryPhrase">recovery phrase</label>
+			<input type="password" id="recoveryPhrase" name="recovery_phrase" placeholder="enter your recovery phrase" autocomplete="off" required>
+		</div>
+
+		<button type="submit" class="btn btn-primary encrypt-submit">recover file</button>
+	</form>
+
+	<aside class="encrypt-info">
+		<h3>recovery details</h3>
+		<ul>
+			<li>use the recovery phrase saved during setup</li>
+			<li>only <strong>.vigilock</strong> files are supported</li>
+			<li>files larger than 100mb are not allowed</li>
+		</ul>
+	</aside>
+</div>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<script>
+	window.__vigilockFlashMessages = {{ messages | tojson }};
+</script>
+{% endif %}
+{% endwith %}
+
+<div id="recoveryErrorModal" class="error-modal" aria-hidden="true">
+	<div class="error-modal__card" role="dialog" aria-modal="true" aria-labelledby="recoveryModalMessage">
+		<div class="error-modal__header">
+			<h3>Error</h3>
+			<button id="recoveryModalClose" class="error-modal__close" type="button" aria-label="Close error message">&times;</button>
+		</div>
+		<p id="recoveryModalMessage" class="error-modal__message"></p>
+		<div class="error-modal__actions">
+			<button id="recoveryModalOk" class="btn btn-primary" type="button">OK</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	const recoveryDropZone = document.getElementById('recoveryDropZone');
+	const recoveryFileInput = document.getElementById('recoveryFileInput');
+	const recoveryDropText = document.getElementById('recoveryDropText');
+	const recoveryFileName = document.getElementById('recoveryFileName');
+	const recoveryMaxSize = 100 * 1024 * 1024;
+
+	['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+		recoveryDropZone.addEventListener(eventName, event => {
+			event.preventDefault();
+			event.stopPropagation();
+		});
+	});
+
+	recoveryDropZone.addEventListener('drop', event => {
+		const files = event.dataTransfer.files;
+		if (files.length > 0) {
+			recoveryFileInput.files = files;
+			validateRecoveryFile(files[0]);
+		}
+	});
+
+	recoveryFileInput.addEventListener('change', () => {
+		if (recoveryFileInput.files.length > 0) {
+			validateRecoveryFile(recoveryFileInput.files[0]);
+		}
+	});
+
+	function validateRecoveryFile(file) {
+		if (file.size > recoveryMaxSize) {
+			recoveryFileInput.value = '';
+			showRecoveryError('The file you uploaded exceeds the 100MB limit.');
+			return;
+		}
+		displayRecoveryFileName(file.name);
+	}
+
+	function displayRecoveryFileName(name) {
+		recoveryDropText.style.display = 'none';
+		recoveryFileName.textContent = '✓ ' + name;
+		recoveryFileName.style.display = 'block';
+	}
+
+	function showRecoveryError(message) {
+		document.getElementById('recoveryModalMessage').textContent = message;
+		const modal = document.getElementById('recoveryErrorModal');
+		modal.style.display = 'flex';
+		modal.setAttribute('aria-hidden', 'false');
+	}
+
+	function closeRecoveryError() {
+		const modal = document.getElementById('recoveryErrorModal');
+		modal.style.display = 'none';
+		modal.setAttribute('aria-hidden', 'true');
+	}
+
+	document.getElementById('recoveryModalClose').addEventListener('click', closeRecoveryError);
+	document.getElementById('recoveryModalOk').addEventListener('click', closeRecoveryError);
+
+	const recoveryFlashMessages = window.__vigilockFlashMessages || [];
+	if (recoveryFlashMessages.length > 0) {
+		showRecoveryError(recoveryFlashMessages[0]);
+	}
+</script>
 {% endblock %}
