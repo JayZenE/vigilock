@@ -22,12 +22,32 @@
 
         <div class="form-field">
             <label for="password">password</label>
-            <input type="password" id="password" name="password" placeholder="enter a secure password" required>
+            <div class="password-input">
+                <input type="password" id="password" name="password" placeholder="enter a secure password" required>
+                <button type="button" id="togglePassword" class="password-toggle" aria-label="Show password" title="Show password">👁️</button>
+            </div>
         </div>
 
         <div class="form-field">
-            <label for="recoveryPhrase">recovery phrase</label>
-            <input type="password" id="recoveryPhrase" name="recovery_phrase" placeholder="create a recovery phrase" autocomplete="off" required>
+            <label for="recoveryQuestion">recovery question</label>
+            <div class="custom-select" data-custom-select>
+                <select id="recoveryQuestion" name="recovery_question" required>
+                    <option value="" selected disabled>choose a question</option>
+                    {% for question_id, question_text in recovery_questions %}
+                    <option value="{{ question_id }}">{{ question_text }}</option>
+                    {% endfor %}
+                </select>
+                <button class="custom-select__trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="custom-select__value">choose a question</span>
+                    <span class="custom-select__chevron" aria-hidden="true"></span>
+                </button>
+                <div class="custom-select__menu" role="listbox" aria-label="recovery question"></div>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label for="recoveryAnswer">recovery answer</label>
+            <input type="password" id="recoveryAnswer" name="recovery_answer" placeholder="enter your answer" autocomplete="off" required>
         </div>
 
         <button type="submit" class="btn btn-primary encrypt-submit">encrypt file</button>
@@ -38,7 +58,7 @@
         <ul>
             <li>maximum file size: 100mb</li>
             <li>one file at a time</li>
-            <li>keep your recovery phrase somewhere safe</li>
+            <li>remember your recovery question and answer</li>
         </ul>
     </aside>
 </div>
@@ -71,6 +91,42 @@
     const dropText = document.getElementById('dropText');
     const orText = document.getElementById('orText');
     const MAX_SIZE = 100 * 1024 * 1024;
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInputWrapper = passwordInput.parentElement;
+    let passwordVisibilityTimeout;
+
+    function updatePasswordToggle() {
+        const hasValue = passwordInput.value.length > 0;
+        passwordInputWrapper.classList.toggle('has-value', hasValue);
+        togglePassword.style.opacity = hasValue ? '1' : '0';
+        togglePassword.style.visibility = hasValue ? 'visible' : 'hidden';
+        if (!passwordInput.value) {
+            passwordInput.type = 'password';
+            togglePassword.setAttribute('aria-label', 'Show password');
+            togglePassword.title = 'Show password';
+            clearTimeout(passwordVisibilityTimeout);
+        }
+    }
+
+    passwordInput.addEventListener('input', updatePasswordToggle);
+    updatePasswordToggle();
+
+    togglePassword.addEventListener('click', () => {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type = isHidden ? 'text' : 'password';
+        togglePassword.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        togglePassword.title = isHidden ? 'Hide password' : 'Show password';
+
+        clearTimeout(passwordVisibilityTimeout);
+        if (isHidden) {
+            passwordVisibilityTimeout = setTimeout(() => {
+                passwordInput.type = 'password';
+                togglePassword.setAttribute('aria-label', 'Show password');
+                togglePassword.title = 'Show password';
+            }, 3000);
+        }
+    });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, preventDefaults, false);

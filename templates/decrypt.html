@@ -22,7 +22,10 @@
 
         <div class="form-field">
             <label for="password">password</label>
-            <input type="password" id="password" name="password" placeholder="enter your password">
+            <div class="password-input">
+                <input type="password" id="password" name="password" placeholder="enter your password">
+                <button type="button" id="togglePassword" class="password-toggle" aria-label="Show password" title="Show password">👁️</button>
+            </div>
         </div>
 
         <p class="recovery-link"><a href="{{ url_for('recovery') }}">forgot your password? try data recovery</a></p>
@@ -34,8 +37,7 @@
         <h3>decrypt details</h3>
         <ul>
             <li>only supports <strong>.vigilock</strong> encrypted files</li>
-            <li>use your password or recovery phrase</li>
-            <li>files larger than 100mb are not allowed</li>
+            <li>use the password created during encryption</li>
         </ul>
     </aside>
 </div>
@@ -68,6 +70,42 @@
     const dropText = document.getElementById('dropText');
     const orText = document.getElementById('orText');
     const MAX_SIZE = 100 * 1024 * 1024;
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInputWrapper = passwordInput.parentElement;
+    let passwordVisibilityTimeout;
+
+    function updatePasswordToggle() {
+        const hasValue = passwordInput.value.length > 0;
+        passwordInputWrapper.classList.toggle('has-value', hasValue);
+        togglePassword.style.opacity = hasValue ? '1' : '0';
+        togglePassword.style.visibility = hasValue ? 'visible' : 'hidden';
+        if (!hasValue) {
+            passwordInput.type = 'password';
+            togglePassword.setAttribute('aria-label', 'Show password');
+            togglePassword.title = 'Show password';
+            clearTimeout(passwordVisibilityTimeout);
+        }
+    }
+
+    passwordInput.addEventListener('input', updatePasswordToggle);
+    updatePasswordToggle();
+
+    togglePassword.addEventListener('click', () => {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type = isHidden ? 'text' : 'password';
+        togglePassword.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        togglePassword.title = isHidden ? 'Hide password' : 'Show password';
+
+        clearTimeout(passwordVisibilityTimeout);
+        if (isHidden) {
+            passwordVisibilityTimeout = setTimeout(() => {
+                passwordInput.type = 'password';
+                togglePassword.setAttribute('aria-label', 'Show password');
+                togglePassword.title = 'Show password';
+            }, 3000);
+        }
+    });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, preventDefaults, false);

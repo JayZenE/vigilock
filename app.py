@@ -1,15 +1,30 @@
 from io import BytesIO
 from pathlib import Path
+import sys
 
 from cryptography.exceptions import InvalidTag
 from flask import Flask, render_template, request, send_file, flash
 from werkzeug.utils import secure_filename
 
-from encryption import decrypt_data, encrypt_data, recover_key
+from encryption import decrypt_password_data, decrypt_recovery_data, encrypt_data, recover_key
 
-app = Flask(__name__)
+BASE_DIR = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / 'templates'),
+    static_folder=str(BASE_DIR / 'static'),
+)
 app.secret_key = "replace-with-a-secure-secret"
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+RECOVERY_QUESTIONS = [
+    ('first_pet', 'What was the name of your first pet?'),
+    ('birth_city', 'In what city were you born?'),
+    ('favorite_teacher', 'What was the name of your favorite teacher?'),
+    ('childhood_street', 'What street did you grow up on?'),
+    ('favorite_book', 'What was your favorite book as a child?'),
+    ('first_concert', 'What was the first concert you attended?'),
+]
+RECOVERY_QUESTION_IDS = {question_id for question_id, _ in RECOVERY_QUESTIONS}
 
 
 # Home
@@ -30,35 +45,41 @@ def encrypt():
     if request.method == 'POST':
         uploaded_file = request.files.get('file')
         password = (request.form.get('password') or '').strip()
-        recovery_phrase = (request.form.get('recovery_phrase') or '').strip()
+        recovery_question = request.form.get('recovery_question') or ''
+        recovery_answer = (request.form.get('recovery_answer') or '').strip()
 
         if not uploaded_file or not uploaded_file.filename:
             flash('Please choose a file to encrypt.')
-            return render_template('encrypt.html')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
         if not password:
             flash('Please enter a passphrase.')
-            return render_template('encrypt.html')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
-        if not recovery_phrase:
-            flash('Please create a recovery phrase.')
-            return render_template('encrypt.html')
+        if recovery_question not in RECOVERY_QUESTION_IDS:
+            flash('Please choose a recovery question.')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
+
+        if not recovery_answer:
+            flash('Please enter an answer to your recovery question.')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
         file_bytes = uploaded_file.read()
         if len(file_bytes) > MAX_UPLOAD_BYTES:
             flash('The file you uploaded exceeds the 100MB limit.')
-            return render_template('encrypt.html')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
         try:
             encrypted_bytes = encrypt_data(
                 password,
                 file_bytes,
                 uploaded_file.filename,
-                recovery_phrase,
+                recovery_answer,
+                recovery_question=recovery_question,
             )
         except Exception as exc:
             flash(f'Encryption failed: {exc}')
-            return render_template('encrypt.html')
+            return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
         original_name = secure_filename(uploaded_file.filename)
         output_name = f"{Path(original_name).stem}.vigilock"
@@ -69,7 +90,7 @@ def encrypt():
             download_name=output_name,
         )
 
-    return render_template('encrypt.html')
+    return render_template('encrypt.html', recovery_questions=RECOVERY_QUESTIONS)
 
 
 # Decryption
@@ -78,14 +99,13 @@ def decrypt():
     if request.method == 'POST':
         uploaded_file = request.files.get('file')
         password = (request.form.get('password') or '').strip()
-        recovery_phrase = (request.form.get('recovery_phrase') or '').strip()
 
         if not uploaded_file or not uploaded_file.filename:
             flash('Please choose a file to decrypt.')
             return render_template('decrypt.html')
 
-        if not password and not recovery_phrase:
-            flash('Please enter your password or recovery phrase.')
+        if not password:
+            flash('Please enter your password.')
             return render_template('decrypt.html')
 
         file_bytes = uploaded_file.read()
@@ -94,8 +114,7 @@ def decrypt():
             return render_template('decrypt.html')
 
         try:
-            credentials = tuple(value for value in (password, recovery_phrase) if value)
-            decrypted_bytes, original_name = decrypt_data(credentials, file_bytes)
+            decrypted_bytes, original_name = decrypt_password_data(password, file_bytes)
         except InvalidTag:
             flash('Decryption failed: inputted password is incorrect.')
             return render_template('decrypt.html')
@@ -122,15 +141,20 @@ def decrypt():
 def recovery():
     if request.method == 'POST':
         uploaded_file = request.files.get('file')
-        recovery_phrase = (request.form.get('recovery_phrase') or '').strip()
+        recovery_question = request.form.get('recovery_question') or ''
+        recovery_answer = (request.form.get('recovery_answer') or '').strip()
 
         if not uploaded_file or not uploaded_file.filename:
             flash('Please choose an encrypted file to recover.')
             return render_template('recovery.html')
 
-        if not recovery_phrase:
-            flash('Please enter your recovery phrase.')
-            return render_template('recovery.html')
+        if recovery_question not in RECOVERY_QUESTION_IDS:
+            flash('Please choose the recovery question used during encryption.')
+            return render_template('recovery.html', recovery_questions=RECOVERY_QUESTIONS)
+
+        if not recovery_answer:
+            flash('Please enter the answer to your recovery question.')
+            return render_template('recovery.html', recovery_questions=RECOVERY_QUESTIONS)
 
         file_bytes = uploaded_file.read()
         if len(file_bytes) > MAX_UPLOAD_BYTES:
@@ -138,11 +162,13 @@ def recovery():
             return render_template('recovery.html')
 
         try:
-            recovered_key = recover_key(recovery_phrase)
-            recovered_bytes, original_name = decrypt_data(recovered_key, file_bytes)
+            recovered_key = recover_key(recovery_answer)
+            recovered_bytes, original_name = decrypt_recovery_data(
+                recovered_key, file_bytes, recovery_question
+            )
         except InvalidTag:
             flash('Recovery failed: the recovery phrase is incorrect.')
-            return render_template('recovery.html')
+            return render_template('recovery.html', recovery_questions=RECOVERY_QUESTIONS)
         except Exception as exc:
             flash(f'Recovery failed: {exc}')
             return render_template('recovery.html')
@@ -155,7 +181,7 @@ def recovery():
             download_name=output_name,
         )
 
-    return render_template('recovery.html')
+    return render_template('recovery.html', recovery_questions=RECOVERY_QUESTIONS)
 
 
 if __name__ == '__main__':

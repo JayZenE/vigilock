@@ -1,5 +1,24 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>about</h2>
-<p>vigilock helps you encrypt and decrypt files safely with a clean web interface.</p>
+<h2>about vigilock</h2>
+
+<p>vigilock is a simple, secure, and cost effective file encryption application designed to help users protect their important files.</p>
+
+<p>vigilock allows users to encrypt files using a password, turning them into protected <strong>.vigilock</strong> files. these files can then be decrypted using the same password when the user needs access to them again.</p>
+
+<p>the application was designed with simplicity and security in mind, making file encryption easier to understand and use without requiring advanced technical knowledge.</p>
+
+<h3>how it works</h3>
+
+<ol>
+  <li><strong>choose a file</strong> - select or drag and drop the file you want to protect.</li>
+  <li><strong>enter a password</strong> - enter a password to protect your file.</li>
+  <li><strong>encrypt</strong> - vigilock encrypts your file using AES-256-GCM and creates a <strong>.vigilock</strong> file.</li>
+  <li><strong>decrypt</strong> - upload your <strong>.vigilock</strong> file and enter the same password to recover the original file.</li>
+</ol>
+
+<h3>security</h3>
+
+<p>vigilock uses aes-256-gcm encryption to protect files. the encrypted file can only be successfully decrypted when the correct password is provided.</p>
+<p><strong>vigilock - simple encryption. secure files.</strong></p>
 {% endblock %}

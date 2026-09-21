@@ -3,7 +3,7 @@
 <section class="hero encrypt-hero">
 	<div class="hero__copy">
 		<h1>data recovery</h1>
-		<p>restore the original file from a vigiLock backup using your recovery phrase.</p>
+		<p>restore the original file from a vigilock backup using your recovery question and answer.</p>
 	</div>
 </section>
 {% endblock %}
@@ -20,8 +20,28 @@
 		</div>
 
 		<div class="form-field">
-			<label for="recoveryPhrase">recovery phrase</label>
-			<input type="password" id="recoveryPhrase" name="recovery_phrase" placeholder="enter your recovery phrase" autocomplete="off" required>
+			<label for="recoveryQuestion">recovery question</label>
+			<div class="custom-select" data-custom-select>
+				<select id="recoveryQuestion" name="recovery_question" required>
+					<option value="" selected disabled>choose a question</option>
+					{% for question_id, question_text in recovery_questions %}
+					<option value="{{ question_id }}">{{ question_text }}</option>
+					{% endfor %}
+				</select>
+				<button class="custom-select__trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+					<span class="custom-select__value">choose a question</span>
+					<span class="custom-select__chevron" aria-hidden="true"></span>
+				</button>
+				<div class="custom-select__menu" role="listbox" aria-label="recovery question"></div>
+			</div>
+		</div>
+
+		<div class="form-field">
+			<label for="recoveryAnswer">recovery answer</label>
+			<div class="password-input">
+				<input type="password" id="recoveryAnswer" name="recovery_answer" placeholder="enter your answer" autocomplete="off" required>
+				<button type="button" id="toggleRecoveryAnswer" class="password-toggle" aria-label="Show answer" title="Show answer">👁️</button>
+			</div>
 		</div>
 
 		<button type="submit" class="btn btn-primary encrypt-submit">recover file</button>
@@ -30,9 +50,8 @@
 	<aside class="encrypt-info">
 		<h3>recovery details</h3>
 		<ul>
-			<li>use the recovery phrase saved during setup</li>
+			<li>the recovery question will be auto-selected based on what you initially encrypted your file with</li>
 			<li>only <strong>.vigilock</strong> files are supported</li>
-			<li>files larger than 100mb are not allowed</li>
 		</ul>
 	</aside>
 </div>
@@ -63,7 +82,44 @@
 	const recoveryFileInput = document.getElementById('recoveryFileInput');
 	const recoveryDropText = document.getElementById('recoveryDropText');
 	const recoveryFileName = document.getElementById('recoveryFileName');
+	const recoveryQuestion = document.getElementById('recoveryQuestion');
+	const recoveryAnswer = document.getElementById('recoveryAnswer');
+	const toggleRecoveryAnswer = document.getElementById('toggleRecoveryAnswer');
+	const recoveryAnswerWrapper = recoveryAnswer.parentElement;
 	const recoveryMaxSize = 100 * 1024 * 1024;
+	let recoveryAnswerVisibilityTimeout;
+
+	function updateRecoveryAnswerToggle() {
+		const hasValue = recoveryAnswer.value.length > 0;
+		recoveryAnswerWrapper.classList.toggle('has-value', hasValue);
+		toggleRecoveryAnswer.style.opacity = hasValue ? '1' : '0';
+		toggleRecoveryAnswer.style.visibility = hasValue ? 'visible' : 'hidden';
+		if (!hasValue) {
+			recoveryAnswer.type = 'password';
+			toggleRecoveryAnswer.setAttribute('aria-label', 'Show answer');
+			toggleRecoveryAnswer.title = 'Show answer';
+			clearTimeout(recoveryAnswerVisibilityTimeout);
+		}
+	}
+
+	recoveryAnswer.addEventListener('input', updateRecoveryAnswerToggle);
+	updateRecoveryAnswerToggle();
+
+	toggleRecoveryAnswer.addEventListener('click', () => {
+		const isHidden = recoveryAnswer.type === 'password';
+		recoveryAnswer.type = isHidden ? 'text' : 'password';
+		toggleRecoveryAnswer.setAttribute('aria-label', isHidden ? 'Hide answer' : 'Show answer');
+		toggleRecoveryAnswer.title = isHidden ? 'Hide answer' : 'Show answer';
+
+		clearTimeout(recoveryAnswerVisibilityTimeout);
+		if (isHidden) {
+			recoveryAnswerVisibilityTimeout = setTimeout(() => {
+				recoveryAnswer.type = 'password';
+				toggleRecoveryAnswer.setAttribute('aria-label', 'Show answer');
+				toggleRecoveryAnswer.title = 'Show answer';
+			}, 3000);
+		}
+	});
 
 	['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
 		recoveryDropZone.addEventListener(eventName, event => {
@@ -93,6 +149,40 @@
 			return;
 		}
 		displayRecoveryFileName(file.name);
+		selectRecoveryQuestion(file);
+	}
+
+	async function selectRecoveryQuestion(file) {
+		recoveryQuestion.value = '';
+		recoveryQuestion.dispatchEvent(new Event('change', { bubbles: true }));
+
+		try {
+			const header = await file.slice(0, 14).arrayBuffer();
+			const headerBytes = new Uint8Array(header);
+			const format = new TextDecoder().decode(headerBytes.slice(0, 8));
+			if (format !== 'VIGLOCK4' || headerBytes.length < 14) {
+				return;
+			}
+
+			const view = new DataView(header);
+			const nameLength = view.getUint32(8);
+			const questionLengthOffset = 12 + nameLength;
+			const questionHeader = await file.slice(questionLengthOffset, questionLengthOffset + 2).arrayBuffer();
+			if (questionHeader.byteLength < 2) {
+				return;
+			}
+
+			const questionLength = new DataView(questionHeader).getUint16(0);
+			const questionBytes = await file.slice(questionLengthOffset + 2, questionLengthOffset + 2 + questionLength).arrayBuffer();
+			const questionId = new TextDecoder().decode(questionBytes);
+			if ([...recoveryQuestion.options].some(option => option.value === questionId)) {
+				recoveryQuestion.value = questionId;
+				recoveryQuestion.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		} catch (error) {
+			recoveryQuestion.value = '';
+			recoveryQuestion.dispatchEvent(new Event('change', { bubbles: true }));
+		}
 	}
 
 	function displayRecoveryFileName(name) {

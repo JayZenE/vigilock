@@ -19,6 +19,7 @@ def encrypt_data(
     data: bytes,
     filename: str | None = None,
     recovery_key: bytes | str | None = None,
+    recovery_question: str | None = None,
 ) -> bytes:
     nonce = os.urandom(12)
     ciphertext = AESGCM(_normalize_key(key)).encrypt(nonce, data, None)
@@ -29,12 +30,16 @@ def encrypt_data(
             recovery_nonce, data, None
         )
         name_bytes = (filename or '').encode('utf-8')
+        question_bytes = (recovery_question or '').encode('utf-8')
         name_length = len(name_bytes).to_bytes(4, byteorder='big')
+        question_length = len(question_bytes).to_bytes(2, byteorder='big')
         ciphertext_length = len(ciphertext).to_bytes(4, byteorder='big')
         return (
-            b'VIGLOCK3'
+            b'VIGLOCK4'
             + name_length
             + name_bytes
+            + question_length
+            + question_bytes
             + ciphertext_length
             + nonce
             + ciphertext

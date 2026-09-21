@@ -1,2 +1,2 @@
-def recover_key(recovery_phrase: str) -> str:
-    return recovery_phrase.strip()
+def recover_key(recovery_answer: str) -> str:
+    return recovery_answer.strip()
